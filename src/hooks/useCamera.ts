@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+﻿import React, { useState } from 'react';
 
 export interface CapturedImage {
   base64String?: string;
@@ -8,8 +8,7 @@ export interface CapturedImage {
 }
 
 /**
- * Redimensiona y comprime la imagen para optimizar memoria en dispositivos móviles
- * y acelerar la transferencia al servidor sin perder legibilidad.
+ * Comprime y redimensiona la imagen de forma segura para no saturar memoria en móviles.
  */
 function compressImage(file: File, maxWidth = 1600, maxHeight = 1600, quality = 0.85): Promise<CapturedImage> {
   return new Promise((resolve, reject) => {
@@ -19,7 +18,7 @@ function compressImage(file: File, maxWidth = 1600, maxHeight = 1600, quality = 
       reader.onload = () => {
         try {
           const img = new Image();
-          img.onerror = () => reject(new Error('Error al decodificar la imagen'));
+          img.onerror = () => reject(new Error('Error al cargar la imagen'));
           img.onload = () => {
             try {
               let width = img.width;
@@ -58,8 +57,8 @@ function compressImage(file: File, maxWidth = 1600, maxHeight = 1600, quality = 
                 base64String,
                 format: 'jpeg',
               });
-            } catch (canvasErr: any) {
-              console.warn('[compressImage] Fallback a imagen directa:', canvasErr);
+            } catch (canvasErr) {
+              console.warn('[compressImage] Fallback directo:', canvasErr);
               const rawDataUrl = reader.result as string;
               resolve({
                 dataUrl: rawDataUrl,
@@ -85,91 +84,31 @@ export function useCamera() {
   const [isCapturing, setIsCapturing] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  /**
-   * Abre la cámara o la galería de forma nativa y segura.
-   */
-  const openImagePicker = (mode: 'camera' | 'gallery' | 'any' = 'any'): Promise<CapturedImage | null> => {
-    return new Promise((resolve) => {
-      try {
-        setError(null);
-        setIsCapturing(true);
-
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = 'image/*';
-
-        // En iOS/Android, capture="environment" abre directamente la cámara
-        if (mode === 'camera') {
-          input.setAttribute('capture', 'environment');
-        }
-
-        // Posicionado sutilmente en el DOM para cumplir políticas de seguridad de iOS WebKit
-        input.style.position = 'fixed';
-        input.style.top = '0px';
-        input.style.left = '0px';
-        input.style.width = '1px';
-        input.style.height = '1px';
-        input.style.opacity = '0.01';
-        document.body.appendChild(input);
-
-        let isFinished = false;
-
-        const cleanup = () => {
-          if (!isFinished) {
-            isFinished = true;
-            setIsCapturing(false);
-            if (document.body.contains(input)) {
-              document.body.removeChild(input);
-            }
-          }
-        };
-
-        input.onchange = async (e: any) => {
-          try {
-            const file = e.target?.files?.[0];
-            if (!file) {
-              cleanup();
-              resolve(null);
-              return;
-            }
-
-            const compressed = await compressImage(file);
-            setPhoto(compressed);
-            cleanup();
-            resolve(compressed);
-          } catch (err: any) {
-            console.error('Error procesando foto:', err);
-            setError(err.message || 'No se pudo procesar la imagen seleccionada');
-            cleanup();
-            resolve(null);
-          }
-        };
-
-        // Si el usuario cancela en el selector de iOS
-        window.addEventListener(
-          'focus',
-          () => {
-            setTimeout(() => {
-              if (!input.files || input.files.length === 0) {
-                cleanup();
-              }
-            }, 1200);
-          },
-          { once: true }
-        );
-
-        input.click();
-      } catch (triggerErr: any) {
-        console.error('Error al invocar selector:', triggerErr);
-        setError(triggerErr.message || 'Error al abrir la cámara/galería');
-        setIsCapturing(false);
-        resolve(null);
-      }
-    });
+  const processFile = async (file: File): Promise<CapturedImage | null> => {
+    if (!file) return null;
+    setIsCapturing(true);
+    setError(null);
+    try {
+      const compressed = await compressImage(file);
+      setPhoto(compressed);
+      return compressed;
+    } catch (err: any) {
+      console.error('Error procesando archivo de imagen:', err);
+      setError(err.message || 'Error al procesar la imagen seleccionada');
+      return null;
+    } finally {
+      setIsCapturing(false);
+    }
   };
 
-  const takePhoto = (mode: 'camera' | 'gallery' | 'any' = 'camera') => openImagePicker(mode);
-  const selectFromFile = () => openImagePicker('gallery');
+  const handleInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      await processFile(file);
+    }
+    // Reiniciar para permitir seleccionar el mismo archivo si es necesario
+    e.target.value = '';
+  };
 
   const clearPhoto = () => {
     setPhoto(null);
@@ -179,8 +118,8 @@ export function useCamera() {
   return {
     photo,
     setPhoto,
-    takePhoto,
-    selectFromFile,
+    processFile,
+    handleInputChange,
     clearPhoto,
     isCapturing,
     error,

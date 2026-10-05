@@ -20,7 +20,7 @@ import { formatCurrency } from '../../utils/formatters';
 
 export const ReportPaymentPage: React.FC = () => {
   const navigate = useNavigate();
-  const { photo, takePhoto, clearPhoto, isCapturing } = useCamera();
+  const { photo, handleInputChange, clearPhoto, isCapturing, error: cameraError } = useCamera();
 
   const [contratos, setContratos] = useState<VentaContrato[]>([]);
   const [cuentas, setCuentas] = useState<CuentaBancaria[]>([]);
@@ -238,7 +238,7 @@ export const ReportPaymentPage: React.FC = () => {
           <label className="text-xs font-bold text-slate-300">Foto del Comprobante / Voucher Bancario</label>
           {photo ? (
             <div className="relative rounded-2xl overflow-hidden border border-brand-500/50 bg-slate-900">
-              <img src={photo.dataUrl} alt="Comprobante" className="w-full h-40 object-contain" />
+              <img src={photo.dataUrl} alt="Comprobante" className="w-full h-44 object-contain" />
               <button
                 type="button"
                 onClick={clearPhoto}
@@ -248,16 +248,43 @@ export const ReportPaymentPage: React.FC = () => {
               </button>
             </div>
           ) : (
-            <button
-              type="button"
-              onClick={() => takePhoto()}
-              disabled={isCapturing}
-              className="w-full py-4 border-2 border-dashed border-slate-700 hover:border-brand-500 rounded-2xl flex flex-col items-center justify-center space-y-1 text-slate-400 hover:text-brand-400 transition-all bg-navy-900/40"
-            >
-              <Camera className="w-6 h-6" />
-              <span className="text-xs font-bold">Tomar Foto del Recibo / Voucher</span>
-              <span className="text-[10px] text-slate-500">Cámara o Archivo</span>
-            </button>
+            <div className="grid grid-cols-2 gap-2">
+              <label
+                htmlFor="camera-input-reportpayment"
+                className="py-3.5 px-3 border-2 border-dashed border-slate-700 hover:border-brand-500 rounded-2xl flex flex-col items-center justify-center space-y-1 text-slate-400 hover:text-brand-400 transition-all bg-navy-900/40 cursor-pointer active:scale-98 text-center"
+              >
+                <input
+                  id="camera-input-reportpayment"
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  className="sr-only"
+                  onChange={handleInputChange}
+                />
+                <Camera className="w-5 h-5 text-brand-400" />
+                <span className="text-xs font-bold">Tomar Foto</span>
+                <span className="text-[10px] text-slate-500">Cámara</span>
+              </label>
+
+              <label
+                htmlFor="gallery-input-reportpayment"
+                className="py-3.5 px-3 border-2 border-dashed border-slate-700 hover:border-brand-500 rounded-2xl flex flex-col items-center justify-center space-y-1 text-slate-400 hover:text-brand-400 transition-all bg-navy-900/40 cursor-pointer active:scale-98 text-center"
+              >
+                <input
+                  id="gallery-input-reportpayment"
+                  type="file"
+                  accept="image/*"
+                  className="sr-only"
+                  onChange={handleInputChange}
+                />
+                <ImageIcon className="w-5 h-5 text-cyan-400" />
+                <span className="text-xs font-bold">Galería / Archivo</span>
+                <span className="text-[10px] text-slate-500">Elegir imagen</span>
+              </label>
+            </div>
+          )}
+          {cameraError && (
+            <p className="text-[11px] text-red-400 font-semibold">{cameraError}</p>
           )}
         </div>
 

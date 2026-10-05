@@ -1,8 +1,8 @@
-import type { CapacitorConfig } from '@capacitor/cli';
+﻿import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'com.proyectosanmiguel.amsa',
-  appName: 'San Miguel Móvil',
+  appName: 'App AMSA',
   webDir: 'dist',
   server: {
     androidScheme: 'https',
