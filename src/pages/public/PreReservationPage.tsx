@@ -4,6 +4,7 @@ import {
   BookmarkCheck,
   Building2,
   Camera,
+  Image as ImageIcon,
   CheckCircle2,
   User,
   CreditCard,

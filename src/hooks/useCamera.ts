@@ -8,16 +8,16 @@ export interface CapturedImage {
 }
 
 /**
- * Redimensiona y comprime una imagen para evitar consumo excesivo de memoria en iOS/Android
- * y asegurar que el comprobante se transfiera rápidamente al servidor.
+ * Redimensiona y comprime la imagen para optimizar memoria en dispositivos móviles
+ * y acelerar la transferencia al servidor sin perder legibilidad.
  */
 function compressImage(file: File, maxWidth = 1600, maxHeight = 1600, quality = 0.85): Promise<CapturedImage> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onerror = () => reject(new Error('Error al leer el archivo de imagen'));
+    reader.onerror = () => reject(new Error('Error al leer el archivo'));
     reader.onload = () => {
       const img = new Image();
-      img.onerror = () => reject(new Error('Error al cargar la imagen para procesamiento'));
+      img.onerror = () => reject(new Error('Error al decodificar la imagen'));
       img.onload = () => {
         let width = img.width;
         let height = img.height;
@@ -68,11 +68,11 @@ export function useCamera() {
   const [error, setError] = useState<string | null>(null);
 
   /**
-   * Selector nativo que activa el menú oficial del sistema en iOS y Android:
-   * "Tomar Foto", "Fototeca / Galería" o "Elegir Archivo".
-   * Es 100% estable, no se cierra y nunca crashea la app.
+   * Abre la cámara o la galería de manera infalible en iOS / Android / Web.
+   * Al agregar el input al DOM antes del click, iOS WebKit permite activar la cámara en vivo
+   * con capture="environment".
    */
-  const selectFromFile = (): Promise<CapturedImage | null> => {
+  const openImagePicker = (mode: 'camera' | 'gallery' | 'any' = 'any'): Promise<CapturedImage | null> => {
     return new Promise((resolve) => {
       setError(null);
       setIsCapturing(true);
@@ -81,13 +81,35 @@ export function useCamera() {
       input.type = 'file';
       input.accept = 'image/*';
 
-      let resolved = false;
+      // En iOS/Android, capture="environment" abre directamente el visor de la cámara trasera
+      if (mode === 'camera') {
+        input.setAttribute('capture', 'environment');
+      }
+
+      // Estilos para ocultar pero mantener presente en el DOM (requerido por seguridad en iOS WebKit)
+      input.style.position = 'fixed';
+      input.style.top = '-9999px';
+      input.style.left = '-9999px';
+      input.style.opacity = '0';
+      input.style.pointerEvents = 'none';
+      document.body.appendChild(input);
+
+      let isFinished = false;
+
+      const cleanup = () => {
+        if (!isFinished) {
+          isFinished = true;
+          setIsCapturing(false);
+          if (document.body.contains(input)) {
+            document.body.removeChild(input);
+          }
+        }
+      };
 
       input.onchange = async (e: any) => {
-        resolved = true;
         const file = e.target?.files?.[0];
         if (!file) {
-          setIsCapturing(false);
+          cleanup();
           resolve(null);
           return;
         }
@@ -95,39 +117,36 @@ export function useCamera() {
         try {
           const compressed = await compressImage(file);
           setPhoto(compressed);
-          setIsCapturing(false);
+          cleanup();
           resolve(compressed);
         } catch (err: any) {
-          console.error('Error procesando imagen:', err);
-          setError('Error al procesar la imagen seleccionada');
-          setIsCapturing(false);
+          console.error('Error procesando foto:', err);
+          setError('No se pudo procesar la imagen seleccionada');
+          cleanup();
           resolve(null);
         }
       };
 
-      // Si el usuario cancela el selector nativo
+      // Limpieza si el usuario cancela o regresa a la app
       window.addEventListener(
         'focus',
         () => {
           setTimeout(() => {
-            if (!resolved) {
-              setIsCapturing(false);
+            if (!input.files || input.files.length === 0) {
+              cleanup();
             }
-          }, 1000);
+          }, 1200);
         },
         { once: true }
       );
 
+      // Disparar apertura nativa
       input.click();
     });
   };
 
-  /**
-   * takePhoto invoca directamente el selector nativo infalible
-   */
-  const takePhoto = async (): Promise<CapturedImage | null> => {
-    return selectFromFile();
-  };
+  const takePhoto = (mode: 'camera' | 'gallery' | 'any' = 'camera') => openImagePicker(mode);
+  const selectFromFile = () => openImagePicker('gallery');
 
   const clearPhoto = () => {
     setPhoto(null);
