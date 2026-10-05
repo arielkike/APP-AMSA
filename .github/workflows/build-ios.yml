@@ -1,4 +1,4 @@
-﻿name: 🍏 Build iOS App (iPhone)
+name: Build iOS App
 
 on:
   push:
@@ -6,67 +6,43 @@ on:
       - main
       - master
   workflow_dispatch:
-
 jobs:
   build-ios:
-    name: 📱 Compilar iOS en Servidor Mac
+    name: Compilar iOS en Mac
     runs-on: macos-14
 
     steps:
-      - name: 🚚 Checkout del repositorio
+      - name: Checkout del repositorio
         uses: actions/checkout@v4
 
-      - name: 🟢 Configurar Node.js
+      - name: Configurar Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: 'npm'
 
-      - name: 📦 Instalar dependencias NPM
+      - name: Instalar dependencias NPM
         run: npm install
 
-      - name: ⚡ Compilar proyecto web (Vite)
+      - name: Compilar proyecto web
         run: npm run build
 
-      - name: 🔄 Sincronizar Capacitor iOS
+      - name: Sincronizar Capacitor iOS
         run: npx cap sync ios
 
-      - name: 📦 Resolver paquetes Swift (SPM)
+      - name: Compilar proyecto iOS Simulator
         run: |
-          xcodebuild -resolvePackageDependencies -project ios/App/App.xcodeproj
+          xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Release -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath build clean build
 
-      - name: 🔨 Compilar App para iPhone
+      - name: Empaquetar app para descarga
         run: |
-          xcodebuild -project ios/App/App.xcodeproj \
-                     -scheme App \
-                     -configuration Release \
-                     -sdk iphoneos \
-                     -destination 'generic/platform=iOS' \
-                     -derivedDataPath build \
-                     CODE_SIGNING_ALLOWED=NO \
-                     CODE_SIGNING_REQUIRED=NO \
-                     CODE_SIGN_IDENTITY=" \ \
- CODE_SIGN_ENTITLEMENTS=\\ \
- DEVELOPMENT_TEAM=\\ \
- PROVISIONING_PROFILE_SPECIFIER=\\ \
- clean build || \
- xcodebuild -project ios/App/App.xcodeproj \
- -scheme App \
- -configuration Release \
- -sdk iphonesimulator \
- -destination 'generic/platform=iOS Simulator' \
- -derivedDataPath build \
- clean build
+          mkdir -p output
+          find build/Build/Products -name "*.app" -exec cp -R {} output/ \;
+          cd output && zip -r App-AMSA-iOS.zip *.app
 
- - name: 📦 Empaquetar app para descarga
- run: |
- mkdir -p output
- find build/Build/Products -name \*.app\ -exec cp -R {} output/ \;
- cd output && zip -r App-AMSA-iOS.zip *.app
-
- - name: 📤 Subir archivo de iPhone a GitHub
- uses: actions/upload-artifact@v4
- with:
- name: App-AMSA-iOS
- path: output/App-AMSA-iOS.zip
- retention-days: 14
+      - name: Subir artefacto a GitHub
+        uses: actions/upload-artifact@4
+        with:
+          name: App-AMSA-iOS
+          path: output/App-AMSA-iOS.zip
+          retention-days: 14
