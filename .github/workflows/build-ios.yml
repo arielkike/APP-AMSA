@@ -22,6 +22,13 @@ jobs:
           node-version: 22
           cache: 'npm'
 
+      - name: Seleccionar Xcode 15.4 Estable
+        run: |
+          if [ -d '/Applications/Xcode_15.4.app' ]; then
+            sudo xcode-select -s /Applications/Xcode_15.4.app
+          fi
+          xcodebuild -version
+
       - name: Instalar dependencias NPM
         run: npm install
 
@@ -35,17 +42,17 @@ jobs:
         run: |
           xcodebuild -resolvePackageDependencies -project ios/App/App.xcodeproj
 
-      - name: Compilar App iOS (Dispositivo / Release)
+      - name: Compilar App iOS (Release)
         run: |
-          xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Release -destination 'generic/platform=iOS' CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY='' CODE_SIGNING_REQUIRED=NO -derivedDataPath build clean build
+          xcodebuild -project ios/App/App.xcodeproj             -scheme App             -configuration Release             -destination 'generic/platform=iOS'             CODE_SIGNING_ALLOWED=NO             CODE_SIGN_IDENTITY=''             CODE_SIGNING_REQUIRED=NO             SWIFT_STRICT_CONCURRENCY=minimal             -derivedDataPath build             clean build
 
       - name: Empaquetar IPA y APP
         run: |
           mkdir -p output/Payload
-          find build/Build/Products/Release-iphoneos -name 'App.app' -exec cp -R {} output/Payload/ \;
+          find build/Build/Products -name 'App.app' -exec cp -R {} output/Payload/ \;
           cd output
           zip -r App-AMSA-iOS.ipa Payload
-          zip -r App-AMSA-iOS-App.zip Payload/App.app
+          find Payload -name 'App.app' -exec zip -r App-AMSA-iOS-App.zip {} \;
 
       - name: Subir artefacto a GitHub
         uses: actions/upload-artifact@v4
