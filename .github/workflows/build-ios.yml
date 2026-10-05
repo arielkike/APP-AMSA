@@ -19,7 +19,7 @@ jobs:
       - name: Configurar Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 20
           cache: 'npm'
 
       - name: Instalar dependencias NPM
@@ -28,13 +28,15 @@ jobs:
       - name: Compilar proyecto web
         run: npm run build
 
-      - name: Sincronizar Capacitor iOS
-        run: npx cap sync ios
-
-      - name: Compilar App iOS (Release)
+      - name: Regenerar plataforma iOS limpia
         run: |
-          set -o pipefail
-          xcodebuild -project ios/App/App.xcodeproj             -scheme App             -configuration Release             -destination 'generic/platform=iOS'             CODE_SIGNING_ALLOWED=NO             CODE_SIGN_IDENTITY=''             CODE_SIGNING_REQUIRED=NO             -derivedDataPath build             clean build 2>&1 | tee build.log || (echo '=== ERRORES DE COMPILACION ===' && grep -E 'error:|fatal error:' build.log -B 1 -A 3 && exit 1)
+          rm -rf ios
+          npx cap add ios
+          npx cap sync ios
+
+      - name: Compilar App iOS con CocoaPods (Release)
+        run: |
+          xcodebuild -workspace ios/App/App.xcworkspace             -scheme App             -configuration Release             -destination 'generic/platform=iOS'             CODE_SIGNING_ALLOWED=NO             CODE_SIGN_IDENTITY=''             CODE_SIGNING_REQUIRED=NO             -derivedDataPath build             clean build
 
       - name: Empaquetar IPA y APP
         run: |
