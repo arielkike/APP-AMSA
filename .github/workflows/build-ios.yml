@@ -6,6 +6,7 @@ on:
       - main
       - master
   workflow_dispatch:
+
 jobs:
   build-ios:
     name: Compilar iOS en Mac
@@ -30,19 +31,27 @@ jobs:
       - name: Sincronizar Capacitor iOS
         run: npx cap sync ios
 
-      - name: Compilar proyecto iOS Simulator
+      - name: Resolver dependencias Swift Package Manager
         run: |
-          xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Release -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath build clean build
+          xcodebuild -resolvePackageDependencies -project ios/App/App.xcodeproj
 
-      - name: Empaquetar app para descarga
+      - name: Compilar App iOS (Dispositivo / Release)
         run: |
-          mkdir -p output
-          find build/Build/Products -name "*.app" -exec cp -R {} output/ \;
-          cd output && zip -r App-AMSA-iOS.zip *.app
+          xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Release -destination 'generic/platform=iOS' CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY='' CODE_SIGNING_REQUIRED=NO -derivedDataPath build clean build
+
+      - name: Empaquetar IPA y APP
+        run: |
+          mkdir -p output/Payload
+          find build/Build/Products/Release-iphoneos -name 'App.app' -exec cp -R {} output/Payload/ \;
+          cd output
+          zip -r App-AMSA-iOS.ipa Payload
+          zip -r App-AMSA-iOS-App.zip Payload/App.app
 
       - name: Subir artefacto a GitHub
         uses: actions/upload-artifact@v4
         with:
-          name: App-AMSA-iOS
-          path: output/App-AMSA-iOS.zip
+          name: App-AMSA-iOS-Build
+          path: |
+            output/App-AMSA-iOS.ipa
+            output/App-AMSA-iOS-App.zip
           retention-days: 14
