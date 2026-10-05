@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import {
   BookmarkCheck,
@@ -128,15 +128,16 @@ export const PreReservationPage: React.FC = () => {
     setSubmitting(true);
     try {
       const payload = {
+        lote_id: selectedLoteId,
         id_lote: selectedLoteId,
         lotificacion_id: selectedProjectId,
         nombres_apellidos: nombres,
         identificacion,
         telefono,
-        direccion,
-        cuenta_bancaria_id: selectedCuentaId,
-        monto_anticipo: montoAnticipo,
-        referencia_bancaria: numReferencia,
+        direccion: direccion || '',
+        cuenta_bancaria_id: selectedCuentaId || undefined,
+        monto_anticipo: Number(montoAnticipo) || 100,
+        referencia_bancaria: numReferencia || '',
         comprobante_voucher: photo?.dataUrl || '',
         codigo_referido: codigoReferido.trim() || undefined
       };

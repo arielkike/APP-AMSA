@@ -1,4 +1,4 @@
-import { StorageService } from '../utils/storage';
+﻿import { StorageService } from '../utils/storage';
 import {
   Lotificacion,
   Lote,
@@ -183,50 +183,17 @@ class ApiClient {
   }
 
   async registrarFormalizacion(data: any): Promise<{ success: boolean; message: string; codigo_reserva?: string; formalizacion?: Formalizacion }> {
-    try {
-      return await this.request('/formalizaciones', {
-        method: 'POST',
-        body: data instanceof FormData ? data : JSON.stringify(data)
-      });
-    } catch {
-      const code = `FOR-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
-      const lotificaciones = await this.getLotificaciones();
-      const proj = lotificaciones.find(p => p.id === data.lotificacion_id);
-
-      const nuevaFormalizacion: Formalizacion = {
-        id: code,
-        lotificacion_id: data.lotificacion_id,
-        lotificacion_nombre: proj?.nombre || 'Proyecto San Miguel',
-        id_lote: data.id_lote,
-        lote_identificador: `Lote ID #${data.id_lote}`,
-        nombres_apellidos: data.nombres_apellidos,
-        identificacion: data.identificacion,
-        telefono: data.telefono,
-        direccion: data.direccion,
-        cuenta_bancaria_id: data.cuenta_bancaria_id,
-        cuenta_bancaria_nombre: 'BAC Credomatic USD',
-        monto_anticipo: Number(data.monto_anticipo) || 100,
-        referencia_bancaria: data.referencia_bancaria,
-        comprobante_voucher: data.comprobante_voucher,
-        codigo_referido: data.codigo_referido || undefined,
-        promotor_nombre: data.codigo_referido ? 'Carlos Alberto Mendoza Rivas' : undefined,
-        estado: 'Pendiente',
-        comision_acreditada: false,
-        monto_comision: 20.00,
-        fecha_registro: new Date().toISOString().split('T')[0]
-      };
-
-      const current = await this.getFormalizaciones();
-      const updated = [nuevaFormalizacion, ...current];
-      await StorageService.setJSON('formalizaciones_local', updated);
-
-      return {
-        success: true,
-        message: 'Formalización de lote y prima enviada con éxito. El administrador validará el voucher bancario en breve.',
-        codigo_reserva: code,
-        formalizacion: nuevaFormalizacion
-      };
-    }
+    const payload = {
+      ...data,
+      lote_id: data.lote_id || data.id_lote,
+      id_lote: data.lote_id || data.id_lote,
+      monto_anticipo: Number(data.monto_anticipo) || 100,
+      comprobante_voucher: data.comprobante_voucher || data.comprobante || ''
+    };
+    return await this.request('/formalizaciones', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
   }
 
   async getFormalizaciones(): Promise<Formalizacion[]> {
