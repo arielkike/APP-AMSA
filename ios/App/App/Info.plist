@@ -1,23 +1,23 @@
-<?xml version="1.0" encoding="UTF-8"?>
+﻿<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
 	<key>CAPACITOR_DEBUG</key>
 	<string>$(CAPACITOR_DEBUG)</string>
-	<key>CLBundleDevelopmentRegion</key>
+	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
 	<string>App AMSA</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
-	<key>CLBundleIdentifier</key>
-	<string>$(PRODUCT_BUNDLE_IDENTIFIERE</string>
-	<key>CLBundleInfoDictionaryVersion</key>
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
 	<string>$(PRODUCT_NAME)</string>
-	<key>CLBundlePackageType</key>
-	<string>APQL</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
 	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleVersion</key>
@@ -25,11 +25,11 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>App AMSA requiere acceso a la cámara para tomar fotos de los comprobantes de pago.</string>
+	<string>App AMSA requiere acceso a la camara para tomar fotos de comprobantes de pago.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>App AMSA requiere acceso a la galería para seleccionar comprobantes de pago.</string>
+	<string>App AMSA requiere acceso a la galeria para seleccionar fotos de comprobantes.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>App AMSA requiere acceso para guardar comprobantes en la galería.</string>
+	<string>App AMSA requiere permiso para guardar comprobantes en sus fotos.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
