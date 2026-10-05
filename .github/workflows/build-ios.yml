@@ -41,7 +41,7 @@ jobs:
           cd output && zip -r App-AMSA-iOS.zip *.app
 
       - name: Subir artefacto a GitHub
-        uses: actions/upload-artifact@4
+        uses: actions/upload-artifact@v4
         with:
           name: App-AMSA-iOS
           path: output/App-AMSA-iOS.zip
