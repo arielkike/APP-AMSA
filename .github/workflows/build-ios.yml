@@ -31,34 +31,42 @@ jobs:
       - name: 🔄 Sincronizar Capacitor iOS
         run: npx cap sync ios
 
-      - name: 🔨 Compilar proyecto con Xcode
+      - name: 📦 Resolver paquetes Swift (SPM)
         run: |
-          if [ -d " ios/App/App.xcworkspace\ ]; then
- BUILD_TARGET=\-workspace ios/App/App.xcworkspace\
- else
- BUILD_TARGET=\-project ios/App/App.xcodeproj\
- fi
- 
- xcodebuild \ \
+          xcodebuild -resolvePackageDependencies -project ios/App/App.xcodeproj
+
+      - name: 🔨 Compilar App para iPhone
+        run: |
+          xcodebuild -project ios/App/App.xcodeproj \
+                     -scheme App \
+                     -configuration Release \
+                     -sdk iphoneos \
+                     -destination 'generic/platform=iOS' \
+                     -derivedDataPath build \
+                     CODE_SIGNING_ALLOWED=NO \
+                     CODE_SIGNING_REQUIRED=NO \
+                     CODE_SIGN_IDENTITY=" \ \
+ CODE_SIGN_ENTITLEMENTS=\\ \
+ DEVELOPMENT_TEAM=\\ \
+ PROVISIONING_PROFILE_SPECIFIER=\\ \
+ clean build || \
+ xcodebuild -project ios/App/App.xcodeproj \
  -scheme App \
  -configuration Release \
- -sdk iphoneos \
- -destination 'generic/platform=iOS' \
+ -sdk iphonesimulator \
+ -destination 'generic/platform=iOS Simulator' \
  -derivedDataPath build \
- CODE_SIGNING_ALLOWED=NO \
- CODE_SIGNING_REQUIRED=NO \
- CODE_SIGN_IDENTITY=\\ \
  clean build
 
  - name: 📦 Empaquetar app para descarga
  run: |
  mkdir -p output
  find build/Build/Products -name \*.app\ -exec cp -R {} output/ \;
- cd output && zip -r App-AMSA-iOS-Release.zip *.app
+ cd output && zip -r App-AMSA-iOS.zip *.app
 
  - name: 📤 Subir archivo de iPhone a GitHub
  uses: actions/upload-artifact@v4
  with:
- name: App-AMSA-iOS-Release
- path: output/App-AMSA-iOS-Release.zip
+ name: App-AMSA-iOS
+ path: output/App-AMSA-iOS.zip
  retention-days: 14
